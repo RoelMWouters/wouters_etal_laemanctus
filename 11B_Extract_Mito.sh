@@ -5,7 +5,7 @@
 #PBS -j oe
 
 # ==============================================================================
-# SCRIPT 11C: CONSENSUS EXTRACTION FROM BAM
+# SCRIPT 11B: CONSENSUS EXTRACTION FROM BAM
 # ==============================================================================
 # Description:
 # Parses BLAST coordinates from 11B, and extracts those target regions directly 
