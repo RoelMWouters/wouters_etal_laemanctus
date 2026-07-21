@@ -7,7 +7,7 @@
 #PBS -j oe
 
 # ==============================================================================
-# SCRIPT 11A: NUCLEAR BAIT BLAST SEARCH (PHASED HITS)
+# SCRIPT 12A: NUCLEAR BAIT BLAST SEARCH (PHASED HITS)
 # ==============================================================================
 # Description:
 # Blasts nuclear bait sequences (target loci) against the phased subgenomes 
