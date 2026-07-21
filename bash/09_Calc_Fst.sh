@@ -25,6 +25,7 @@ mkdir -p "$STATS_DIR" "$SCRATCHDIR"
 # Define Populations
 echo -e "S04\nS05\nS06" > "$SCRATCHDIR/popA.txt"
 echo -e "S01\nS02\nS03" > "$SCRATCHDIR/popB.txt"
+echo -e "S07\nS08" > "$SCRATCHDIR/popC.txt"
 
 vcftools --gzvcf "$FINAL_VCF" \
     --weir-fst-pop "$SCRATCHDIR/popA.txt" \
@@ -32,3 +33,21 @@ vcftools --gzvcf "$FINAL_VCF" \
     --fst-window-size 100000 \
     --fst-window-step 50000 \
     --out "$STATS_DIR/fst_A_vs_B"
+
+vcftools --gzvcf "$FINAL_VCF" \
+    --weir-fst-pop "$SCRATCHDIR/popA.txt" \
+    --weir-fst-pop "$SCRATCHDIR/popC.txt" \
+    --fst-window-size 100000 \
+    --fst-window-step 50000 \
+    --out "$STATS_DIR/fst_A_vs_C"
+
+vcftools --gzvcf "$FINAL_VCF" \
+    --weir-fst-pop "$SCRATCHDIR/popB.txt" \
+    --weir-fst-pop "$SCRATCHDIR/popC.txt" \
+    --fst-window-size 100000 \
+    --fst-window-step 50000 \
+    --out "$STATS_DIR/fst_B_vs_C"
+
+
+
+    
