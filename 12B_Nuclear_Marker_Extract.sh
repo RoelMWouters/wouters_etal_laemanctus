@@ -5,7 +5,7 @@
 #PBS -j oe
 
 # ==============================================================================
-# SCRIPT 12: NUCLEAR MARKER CONSENSUS EXTRACTION
+# SCRIPT 12B: NUCLEAR MARKER CONSENSUS EXTRACTION
 # ==============================================================================
 # Description:
 # Uses a hybrid Python/Bash approach to parse phased BLAST results, calculate 
