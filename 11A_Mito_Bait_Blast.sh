@@ -5,7 +5,7 @@
 #PBS -j oe
 
 # ==============================================================================
-# SCRIPT 11B: MITOCHONDRIAL BAIT FETCH & BLAST SEARCH
+# SCRIPT 11A: MITOCHONDRIAL BAIT FETCH & BLAST SEARCH
 # ==============================================================================
 # Description:
 # Automatically fetches an outgroup mitochondrial genome using NCBI Entrez Direct, 
