@@ -43,11 +43,11 @@ The pipeline is designed for execution on a PBS-scheduled High-Performance Compu
 
 Following the upstream bash pipeline, data visualisation is handled locally using a suite of custom R scripts[cite: 1]. These scripts generate the following publication figures:
 
-*   **Clonality & Genetic Distance Plots:** Generates a PI_HAT Identity-by-Descent heatmap and an Identity-by-State (IBS) distance matrix using `ggplot2`[cite: 1]. It also produces an upgraded PCA scatterplot to distinguish lineages[cite: 1].
+*   **PiHAT and MASH Kmer plots:** Generates a PI_HAT Identity-by-Descent heatmap together with the kmer MASH distance using `ggplot2`[cite: 1].
 *   **Fst Density:** Visualises the distribution of genomic divergence across 100kb windows between populations[cite: 1].
 *   **BAF Manhattan Plot:** Maps the whole-genome B-Allele Frequency landscape across chromosomes using `ggpointdensity`[cite: 1].
-*   **Parental Coverage:** Creates a bar chart visualising the parental mapping coverage percentages across the top 50 contigs[cite: 1].
-*   **Phylogenetic Topologies:** Visualises RAxML trees with bootstrap support using `ggtree`, dynamically truncating extremely long outgroup branches[cite: 1].
+*   **Parental Coverage:** Creates a Manhattan plot visualising the parental mapping coverage  across the 36 chromosomes[cite: 1].
+*   **Phylogenetic Topologies:** Visualises RAxML and ASTRAL trees with bootstrap support using `ggtree`, dynamically truncating extremely long outgroup branches[cite: 1].
 *   **Haplotype Networks:** Builds mitochondrial haplotype networks using `ape` and `pegas`, mapping taxonomic sample frequencies and capping extreme mutational steps[cite: 1].
 
 ---
