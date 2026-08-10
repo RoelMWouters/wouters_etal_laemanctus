@@ -17,11 +17,11 @@ source activate hic_figures
 # ------------------------------------------------------------------------------
 # 1. FORMAT CONVERSION (.hic v9 to .cool)
 # ------------------------------------------------------------------------------
-# Using hictk to convert the Juicer/YaHS .hic output into cooler format.
+# Using hictk to convert the YaHS .hic output into cooler format.
 # We extract both 50kb (for insets) and 250kb (to prevent OOM errors on the full genome).
 
-hictk convert Ljul_curated_map.hic laemanctus_50kb.cool --resolutions 50000
-hictk convert Ljul_curated_map.hic laemanctus_250kb.cool --resolutions 250000
+hictk convert your_scaffolded.hic laemanctus_50kb.cool --resolutions 50000
+hictk convert your_scaffolded.hic laemanctus_250kb.cool --resolutions 250000
 
 
 # ------------------------------------------------------------------------------
@@ -32,7 +32,7 @@ hictk convert Ljul_curated_map.hic laemanctus_250kb.cool --resolutions 250000
 
 hicPlotMatrix \
   --matrix laemanctus_250kb.cool \
-  --outFileName diploid_whole_genome_interleaved_250kb.pdf \
+  --outFileName HiC_plot_250kb.pdf \
   --chromosomeOrder Chr1_hapA Chr1_hapB Chr2_hapA Chr2_hapB Chr3_hapA Chr3_hapB Chr4_hapA Chr4_hapB Chr5_hapA Chr5_hapB Chr6_hapA Chr6_hapB Chr7_hapA Chr7_hapB Chr8_hapA Chr8_hapB Chr9_hapA Chr9_hapB Chr10_hapA Chr10_hapB Chr11_hapA Chr11_hapB Chr12_hapA Chr12_hapB Chr13_hapA Chr13_hapB Chr14_hapA Chr14_hapB Chr15_hapA Chr15_hapB Chr16_hapA Chr16_hapB Chr17_hapA Chr17_hapB ChrX_hapA ChrX_hapB \
   --vMax 50 \
   --colorMap Reds \
@@ -46,7 +46,7 @@ hicPlotMatrix \
 
 
 # ------------------------------------------------------------------------------
-# 3. INTERLEAVED MICROCHROMOSOMES & X INSET (50kb)
+# 3. MICROCHROMOSOMES & X INSET (50kb)
 # ------------------------------------------------------------------------------
 # Plotted at high resolution (50kb).
 # Arranged alternating (HapA, HapB, HapA, HapB...) to visualize homologous trans-contacts.
@@ -55,7 +55,7 @@ hicPlotMatrix \
 
 hicPlotMatrix \
   --matrix laemanctus_50kb.cool \
-  --outFileName diploid_microchromosomes_interleaved_vmax50.pdf \
+  --outFileName microchromosomes_HiC_plot_vmax15.pdf \
   --chromosomeOrder Chr7_hapA Chr7_hapB Chr8_hapA Chr8_hapB Chr9_hapA Chr9_hapB Chr10_hapA Chr10_hapB Chr11_hapA Chr11_hapB Chr12_hapA Chr12_hapB Chr13_hapA Chr13_hapB Chr14_hapA Chr14_hapB Chr15_hapA Chr15_hapB Chr16_hapA Chr16_hapB Chr17_hapA Chr17_hapB ChrX_hapA ChrX_hapB \
   --colorMap Reds \
   --clearMaskedBins \
