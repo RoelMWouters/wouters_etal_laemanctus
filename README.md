@@ -17,6 +17,7 @@ The pipeline is designed for execution on a PBS-scheduled High-Performance Compu
 *   **`01_Hifiasm_Assembly.sh`**: *De novo* assembly of ONT long reads phased with Hi-C data.
 *   **`02A_YAHS_Scaffolding.sh`**: Scaffolding of uncollapsed assemblies for Juicebox curation.
 *   **`02B_HapHiC_Scaffolding.sh`**: Allele-aware scaffolding for highly heterozygous genomes.
+*   **`02C_HiCExplorer_figures.sh`**: HiC Explorer for generating HiC plots.
 *   **`06_Subgenome_Phasing.sh`**: Segregation of draft assemblies into distinct parental subgenomes based on mapping bias.
 
 ### Phase 2: Population Genomics & Variant Calling
