@@ -54,4 +54,4 @@ Following the upstream bash pipeline, data visualisation is handled locally usin
 ---
 
 ## Data Availability
-*(Insert Zenodo DOI or NCBI SRA accession numbers here prior to publication).*
+All sequencing data for this project can be found under NCBI BioProject/SRA PRJNA1507630. 
