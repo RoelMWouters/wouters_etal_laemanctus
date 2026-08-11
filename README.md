@@ -6,7 +6,7 @@ Bioinformatic pipelines and scripts accompanying Wouters et al., (2026). Field d
 **Author:** Roel Wouters | Charles University 
 **Description:** A comprehensive bioinformatics pipeline for *de novo* genome assembly, Hi-C scaffolding, population genomics, and species tree inference in *Laemanctus* lizards.
 
-This repository contains the exact bash and R scripts used to process raw sequencing reads (ONT/Illumina/Hi-C) through to final publication-quality figures and phylogenomic topologies.
+This repository contains the exact bash and R scripts used to process raw sequencing reads (ONT/Illumina/Hi-C) through to final figures and phylogenomic topologies.
 
 ## Pipeline Overview
 
