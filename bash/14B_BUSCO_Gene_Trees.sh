@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -N busco_extract
+#PBS -N busco_extract_align
 #PBS -l select=1:ncpus=8:mem=32gb:scratch_local=100gb
 #PBS -l walltime=60:00:00
 #PBS -M your.email@institution.edu
@@ -7,15 +7,13 @@
 #PBS -j oe
 
 # ==============================================================================
-# SCRIPT 14B: BUSCO ALLELIC GENE TREE PIPELINE
+# SCRIPT 14B (STREAMLINED): BUSCO EXTRACTION & ALIGNMENT PIPELINE
 # ==============================================================================
 # Description:
 # Extracts BUSCO loci from a population VCF, filters out paralogous "ghost" 
-# alleles using parental reference BLASTs, aligns the remaining true orthologs 
-# with MAFFT, and infers individual Maximum Likelihood gene trees via IQ-TREE.
-# These trees act as the input for downstream coalescent species tree inference.
-#
-# Dependencies: bcftools, bedtools, samtools, blast-plus, mafft, iqtree
+# alleles using parental reference BLASTs, and aligns the true orthologs 
+# with MAFFT. Applies a PI-site QC check and saves the clean alignments 
+# for downstream gCF/Supermatrix analysis.
 # ==============================================================================
 
 export TMPDIR=$SCRATCHDIR
@@ -33,9 +31,13 @@ MAT_GENOME="${BASE_DIR}/genome_dir/haploid_genome/maternal_ref.fasta"
 SAMPLES=("Sample1" "Sample2" "Sample3" "Sample4")
 
 OUT_DIR="${BASE_DIR}/output_dir/busco_phylogeny"
-mkdir -p "$OUT_DIR/fastas" "$OUT_DIR/alignments" "$OUT_DIR/trees"
+# STREAMLINE: Changed output to alignments_clean and removed trees directory
+mkdir -p "$OUT_DIR/fastas" "$OUT_DIR/alignments_clean"
 mkdir -p "$OUT_DIR/intermediates/unaligned_with_refs"
 mkdir -p "$SCRATCHDIR/unaligned_genes"
+
+# Ensure scratch cleanup on exit
+trap 'rm -rf "$SCRATCHDIR"/*' TERM EXIT
 
 # ==============================================================================
 # PHASE 1: EXTRACTION 
@@ -122,37 +124,25 @@ if [ "$SKIP_PHASE_3" = false ]; then
 fi
 
 # ==============================================================================
-# PHASE 3: HARVESTING REFERENCES 
+# PHASE 3: HARVESTING OUTGROUP
 # ==============================================================================
 if [ "$SKIP_PHASE_3" = false ]; then
-    echo -e "\n--- PHASE 3A: BLAST Searches ---"
+    echo -e "\n--- PHASE 3: Fetching Outgroup Sequence ---"
     module purge
-    module add blast-plus
+    module add blast-plus samtools
 
     cp "$OUTGROUP_GENOME" "$SCRATCHDIR/outgroup.fasta"
     makeblastdb -in "$SCRATCHDIR/outgroup.fasta" -dbtype nucl -out "$SCRATCHDIR/outgroup_db" > /dev/null
+    samtools faidx "$SCRATCHDIR/outgroup.fasta"
     
-    cp "$PAT_GENOME" "$SCRATCHDIR/paternal.fasta"
-    makeblastdb -in "$SCRATCHDIR/paternal.fasta" -dbtype nucl -out "$SCRATCHDIR/paternal_db" > /dev/null
+    # STREAMLINE: Paternal reference harvesting removed entirely
 
     for FILE in "$SCRATCHDIR/unaligned_genes"/*.fasta; do
         BASENAME=$(basename "$FILE" .fasta)
         head -n 2 "$FILE" > "$SCRATCHDIR/query_${BASENAME}.fa"
         
         blastn -task blastn -query "$SCRATCHDIR/query_${BASENAME}.fa" -db "$SCRATCHDIR/outgroup_db" -outfmt "6 sseqid sstart send" -max_target_seqs 1 -max_hsps 1 > "$SCRATCHDIR/hit_out_${BASENAME}.txt"
-        blastn -task blastn -query "$SCRATCHDIR/query_${BASENAME}.fa" -db "$SCRATCHDIR/paternal_db" -outfmt "6 sseqid sstart send" -max_target_seqs 1 -max_hsps 1 > "$SCRATCHDIR/hit_pat_${BASENAME}.txt"
-    done
-
-    echo -e "\n--- PHASE 3B: Sequence Extraction ---"
-    module purge
-    module add samtools
-
-    samtools faidx "$SCRATCHDIR/outgroup.fasta"
-    samtools faidx "$SCRATCHDIR/paternal.fasta"
-
-    for FILE in "$SCRATCHDIR/unaligned_genes"/*.fasta; do
-        BASENAME=$(basename "$FILE" .fasta)
-
+        
         if [ -s "$SCRATCHDIR/hit_out_${BASENAME}.txt" ]; then
             read SSEQID SSTART SEND < "$SCRATCHDIR/hit_out_${BASENAME}.txt"
             if [ "$SSTART" -lt "$SEND" ]; then START=$SSTART; END=$SEND; REV=false; else START=$SEND; END=$SSTART; REV=true; fi
@@ -160,19 +150,11 @@ if [ "$SKIP_PHASE_3" = false ]; then
             if [ "$REV" = true ]; then cat "$SCRATCHDIR/out_seq.txt" | tr 'ACGTacgt' 'TGCAtgca' | rev > "$SCRATCHDIR/out_seq_rev.txt"; mv "$SCRATCHDIR/out_seq_rev.txt" "$SCRATCHDIR/out_seq.txt"; fi
             if [ -s "$SCRATCHDIR/out_seq.txt" ]; then echo -e "\n>OUTGROUP" >> "$FILE"; cat "$SCRATCHDIR/out_seq.txt" >> "$FILE"; echo "" >> "$FILE"; fi
         fi
-
-        if [ -s "$SCRATCHDIR/hit_pat_${BASENAME}.txt" ]; then
-            read SSEQID SSTART SEND < "$SCRATCHDIR/hit_pat_${BASENAME}.txt"
-            if [ "$SSTART" -lt "$SEND" ]; then START=$SSTART; END=$SEND; REV=false; else START=$SEND; END=$SSTART; REV=true; fi
-            samtools faidx "$SCRATCHDIR/paternal.fasta" "${SSEQID}:${START}-${END}" | grep -v "^>" | tr -d '\n' > "$SCRATCHDIR/pat_seq.txt"
-            if [ "$REV" = true ]; then cat "$SCRATCHDIR/pat_seq.txt" | tr 'ACGTacgt' 'TGCAtgca' | rev > "$SCRATCHDIR/pat_seq_rev.txt"; mv "$SCRATCHDIR/pat_seq_rev.txt" "$SCRATCHDIR/pat_seq.txt"; fi
-            if [ -s "$SCRATCHDIR/pat_seq.txt" ]; then echo -e "\n>PATERNAL_REF" >> "$FILE"; cat "$SCRATCHDIR/pat_seq.txt" >> "$FILE"; echo "" >> "$FILE"; fi
-        fi
     done
 fi
 
 # ==============================================================================
-# PHASE 4: ALIGNMENT & QUALITY CONTROL
+# PHASE 4: ALIGNMENT & DRY-RUN QC
 # ==============================================================================
 echo -e "\n--- PHASE 4: Alignment & Quality Control ---"
 module purge
@@ -181,40 +163,35 @@ module add iqtree/3.0.1-mpi
 
 for FILE in "$SCRATCHDIR/unaligned_genes"/*.fasta; do
     BASENAME=$(basename "$FILE" .fasta)
+    ALIGNED_FILE="$OUT_DIR/alignments_clean/${BASENAME}_aligned.fasta"
     
-    if [ -s "$OUT_DIR/trees/${BASENAME}.treefile" ]; then
-        echo "   -> Skipping $BASENAME (Finished)"
+    if [ -s "$ALIGNED_FILE" ]; then
+        echo "   -> Skipping $BASENAME (Already aligned)"
         continue
     fi
 
     echo ">> Aligning: $BASENAME"
-    mafft --auto "$FILE" > "$OUT_DIR/alignments/${BASENAME}_aligned.fasta" 2>/dev/null
+    mafft --auto "$FILE" > "$ALIGNED_FILE" 2>/dev/null
     
     # The Goldilocks QC Check (Dry run IQ-TREE to parse SNPs)
-    iqtree3-mpi -s "$OUT_DIR/alignments/${BASENAME}_aligned.fasta" -m JC -n 0 -pre "$SCRATCHDIR/qc_${BASENAME}" -quiet
+    iqtree3-mpi -s "$ALIGNED_FILE" -m JC -n 0 -pre "$SCRATCHDIR/qc_${BASENAME}" -quiet
     PI_SITES=$(grep "Number of parsimony informative sites:" "$SCRATCHDIR/qc_${BASENAME}.iqtree" | awk '{print $6}')
     
     if [ -z "$PI_SITES" ]; then PI_SITES=0; fi
     echo "   -> Parsimony Informative Sites: $PI_SITES"
 
+    # STREAMLINE: Discard bad alignments, but skip actual tree generation
     if [ "$PI_SITES" -lt 10 ]; then
-        echo "   -> SKIPPING: Too conserved (< 10 PI sites)."
+        echo "   -> SKIPPING: Too conserved (< 10 PI sites). Deleting alignment."
+        rm -f "$ALIGNED_FILE"
         continue
     elif [ "$PI_SITES" -gt 150 ]; then
-        echo "   -> SKIPPING: Too noisy/divergent (> 150 PI sites)."
+        echo "   -> SKIPPING: Too noisy/divergent (> 150 PI sites). Deleting alignment."
+        rm -f "$ALIGNED_FILE"
         continue
     fi
 
-    if grep -q ">OUTGROUP" "$OUT_DIR/alignments/${BASENAME}_aligned.fasta"; then
-        ROOT_FLAG="-o OUTGROUP"
-    else
-        echo "   -> WARNING: No OUTGROUP found. Building unrooted tree."
-        ROOT_FLAG=""
-    fi
-
-    echo "   -> Passing QC. Building Tree..."
-    iqtree3-mpi -s "$OUT_DIR/alignments/${BASENAME}_aligned.fasta" \
-           -B 1000 -T AUTO $ROOT_FLAG --prefix "$OUT_DIR/trees/${BASENAME}" -quiet
+    echo "   -> Alignment passed QC and saved to alignments_clean."
 done
 
 # ==============================================================================
@@ -225,5 +202,5 @@ if [ "$SKIP_PHASE_3" = false ]; then
 fi
 
 echo "=================================================="
-echo "PIPELINE COMPLETE"
+echo "PIPELINE COMPLETE - DATA READY FOR gCF SCRIPT"
 echo "=================================================="
