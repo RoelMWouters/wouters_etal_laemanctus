@@ -48,7 +48,7 @@ Following the upstream bash pipeline, data visualisation is handled locally usin
 *   **Fst Density:** Visualises the distribution of genomic divergence across 100kb windows between populations.
 *   **BAF Manhattan Plot:** Maps the whole-genome B-Allele Frequency landscape across chromosomes using `ggpointdensity`.
 *   **Parental Coverage:** Creates a Manhattan plot visualising the parental mapping coverage  across the 36 chromosomes.
-*   **Phylogenetic Topologies:** Visualises RAxML and ASTRAL trees with bootstrap support using `ggtree`, dynamically truncating extremely long outgroup branches.
+*   **Phylogenetic Topologies:** Visualises RAxML and gCF trees with bootstrap support using `ggtree`, dynamically truncating extremely long outgroup branches.
 *   **Haplotype Networks:** Builds mitochondrial haplotype networks using `ape` and `pegas`, mapping taxonomic sample frequencies and capping extreme mutational steps.
 
 ---
