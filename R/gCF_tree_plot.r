@@ -22,8 +22,8 @@ library(ggplot2)
 # ==============================================================================
 # 1. READ INPUT FILES AND RENAME TAXA
 # ==============================================================================
-tree_file <- "subgenome_concordance300.cf.tree"
-stat_file <- "subgenome_concordance300.cf.stat"
+tree_file <- "subgenome_concordance1000.cf.tree"
+stat_file <- "subgenome_concordance1000.cf.stat"
 
 # Load the tree and concordance factor statistics table
 tree <- read.tree(tree_file)
