@@ -72,14 +72,20 @@ else
 
     awk -v outdir="$SCRATCHDIR/unaligned_genes" '
       /^>/ { 
-        split($0, a, "_"); 
-        sample = a[1];
-        gene = a[2];
-        copy_part = a[3];
-        split(copy_part, c_clean, ":");
-        header = sample "_" gene "_" c_clean[1];
+        # 1. Strip bedtools coordinate baggage if present (e.g., ::ptg0001:100-200)
+        split($0, a, "::"); 
+        clean_header = a[1]; 
+        
+        # 2. Split >SAMPLE_GENE_COPY (e.g., >C01_416at8457_Copy1)
+        split(clean_header, b, "_");
+        sample = b[1];     # >C01
+        gene = b[2];       # 416at8457
+        copy_tag = b[3];   # Copy1
+        
         filename = outdir "/" gene ".fasta";
-        print header >> filename;
+        
+        # 3. Print perfectly formatted IQ-TREE taxa name: >C01_Copy1
+        print sample "_" copy_tag >> filename;
         next;
       }
       { print >> filename }
