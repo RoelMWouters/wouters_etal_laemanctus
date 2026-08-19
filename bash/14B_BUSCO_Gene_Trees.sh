@@ -28,7 +28,7 @@ OUTGROUP_GENOME="${BASE_DIR}/genome_dir/outgroup.fna"
 PAT_GENOME="${BASE_DIR}/genome_dir/paternal_ref.fna" 
 MAT_GENOME="${BASE_DIR}/genome_dir/haploid_genome/maternal_ref.fasta"
 
-SAMPLES=("Sample1" "Sample2" "Sample3" "Sample4")
+SAMPLES=("Sample1" "Sample2" "Sample3" "Sample4", "Sample5", "Sample6", "Sample7", "Sample8")
 
 OUT_DIR="${BASE_DIR}/output_dir/busco_phylogeny"
 mkdir -p "$OUT_DIR/fastas" "$OUT_DIR/alignments_clean"
