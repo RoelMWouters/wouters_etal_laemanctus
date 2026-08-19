@@ -34,7 +34,7 @@ The pipeline is designed for execution on a PBS-scheduled High-Performance Compu
 *   **`12A_Nuclear_Bait_Blast.sh` & `12B_Nuclear_Marker_Extract.sh`**: Hybrid Python/Bash coordinate calculation and allele extraction via `bcftools consensus`.
 *   **`13A_Supermatrix_Builder.sh`**: MAFFT alignment and native Python supermatrix concatenation.
 *   **`13B_RAxML_Phylogeny.sh`**: Maximum Likelihood tree inference with Rapid Bootstrapping.
-*   **`14_BUSCO_Gene_Trees.sh`**: Extraction, ghost-allele purging, and ML gene tree inference for 300 target BUSCO loci.
+*   **`14_BUSCO_Gene_Trees.sh`**: Extraction, ghost-allele purging, and ML gene tree inference for 1000 target BUSCO loci.
 *   **`15_gCF_calc.sh`**: Gene Concordance Factor calculations using IQTREE3.
 *   **`16A_Synteny_Alignment.sh` & `16B_Synteny_JCVI.sh`**: 1:2 ortholog filtering and monkey-patched 3-track JCVI karyotype visualization.
 
