@@ -7,7 +7,7 @@
 #PBS -j oe
 
 # ==============================================================================
-# SCRIPT 14B (STREAMLINED): BUSCO EXTRACTION & ALIGNMENT PIPELINE
+# SCRIPT 14B: BUSCO EXTRACTION & ALIGNMENT PIPELINE
 # ==============================================================================
 # Description:
 # Extracts BUSCO loci from a population VCF, filters out paralogous "ghost" 
