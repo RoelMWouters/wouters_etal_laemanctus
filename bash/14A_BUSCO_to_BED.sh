@@ -19,7 +19,7 @@ OUT_BED="/path/to/cluster/project_dir/genome_dir/1000_random_buscos.bed"
 echo "Parsing BUSCO table and generating randomized 6-column BED file..."
 
 # 1. Filter for "Complete"
-# 2. Extract: Contig ($3), Start-1 ($4-1), End ($5), BuscoID ($1), Dummy Score ("0", not needed but required for bcftools format), Strand ($6)
+# 2. Extract: Contig ($3), Start-1 ($4-1), End ($5), BuscoID ($1), Dummy Score ("0", not needed but required for bcftools consensus format in 14B), Strand ($6)
 # 3. Randomly shuffle and take 1000
 awk -v OFS='\t' '$2 == "Complete" {print $3, $4-1, $5, $1, "0", $6}' "$BUSCO_TABLE" | \
     shuf -n 1000 > "$OUT_BED"
