@@ -18,7 +18,7 @@
 # --- Configuration Block ---
 PREFIX="species_uncollapsed"
 PROJECT_DIR="/path/to/cluster/project_dir/yahs_uncollapsed_3D"
-DRAFT_GENOME="/path/to/cluster/project_dir/hifiasm_assembly/final_results/Assembly_Output/hap1.fasta"
+DRAFT_GENOME="/path/to/cluster/project_dir/hifiasm_assembly/final_results/Assembly_Output/primary.fasta"
 HIC_READ_1="/path/to/cluster/project_dir/hic/trimmed_data/trimmed_R1.fq.gz"
 HIC_READ_2="/path/to/cluster/project_dir/hic/trimmed_data/trimmed_R2.fq.gz"
 RESTRICTION_MOTIFS="GATC,GANTC"
