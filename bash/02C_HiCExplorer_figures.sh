@@ -2,7 +2,7 @@
 
 # ==============================================================================
 # Laemanctus Hi-C Figure Pipeline
-# Requirements: Execute within the 'hic_figures' conda environment.
+# Requirements: Execute within the 'hic_figures' conda environment. Takes .hic file as input.
 # ==============================================================================
 ## Create the environment with the required tools
 module add mambaforge
