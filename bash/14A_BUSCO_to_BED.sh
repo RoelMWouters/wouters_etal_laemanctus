@@ -25,10 +25,20 @@ awk -v OFS='\t' '
   $2 == "Duplicated" {
     busco_id = $1
     contig = $3
-    start = $4 - 1  # 0-based conversion for BED format
-    end = $5
     strand = $6
     score = $7
+    
+    # ---------------------------------------------------------
+    # Force Start to ALWAYS be strictly less than End
+    # and apply the 0-based BED conversion to the smallest number
+    # ---------------------------------------------------------
+    if ($4 < $5) {
+        start = $4 - 1
+        end = $5
+    } else {
+        start = $5 - 1
+        end = $4
+    }
     
     count[busco_id]++
     
