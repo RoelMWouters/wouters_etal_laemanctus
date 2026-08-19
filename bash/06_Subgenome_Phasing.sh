@@ -93,8 +93,8 @@ cat "list_Parent_B.txt" "list_Shared.txt" > "$SCRATCHDIR/target_B.txt"
 seqtk subseq "$SCRATCHDIR/genome.fasta" "$SCRATCHDIR/target_B.txt" > "$SCRATCHDIR/Subgenome_B.fasta"
 
 cp "$SCRATCHDIR/final_phasing_report.tsv" "$OUTPUT_DIR/"
-cp "$SCRATCHDIR/Genome_Parent_A.fasta" "$OUTPUT_DIR/"
-cp "$SCRATCHDIR/Genome_Parent_B.fasta" "$OUTPUT_DIR/"
+cp "$SCRATCHDIR/Subgenome_A.fasta" "$OUTPUT_DIR/"
+cp "$SCRATCHDIR/Subgenome_B.fasta" "$OUTPUT_DIR/"
 cp "$SCRATCHDIR"/list_*.txt "$OUTPUT_DIR/"
 
 clean_scratch
