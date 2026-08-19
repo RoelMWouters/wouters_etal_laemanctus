@@ -14,7 +14,7 @@ The pipeline is designed for execution on a PBS-scheduled High-Performance Compu
 
 ### Phase 1: Genome Assembly & Scaffolding
 *   **`00_HiC_Trimming.sh`**: Pre-processing and adapter trimming of raw Hi-C reads.
-*   **`01_Hifiasm_Assembly.sh`**: *De novo* assembly of ONT long reads phased with Hi-C data.
+*   **`01_Hifiasm_Assembly.sh`**: *De novo* assembly of ONT long reads.
 *   **`02A_YAHS_Scaffolding.sh`**: Scaffolding of uncollapsed assemblies for Juicebox curation.
 *   **`02B_HapHiC_Scaffolding.sh`**: Allele-aware scaffolding for highly heterozygous genomes.
 *   **`02C_HiCExplorer_figures.sh`**: HiC Explorer for generating HiC plots.
