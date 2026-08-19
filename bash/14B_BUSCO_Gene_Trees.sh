@@ -22,7 +22,7 @@ export TMPDIR=$SCRATCHDIR
 BASE_DIR="/path/to/cluster/project_dir"
 REF="${BASE_DIR}/genome_dir/target_genome.fasta"
 VCF="${BASE_DIR}/output_dir/clonality/vcfs/population_final_filtered.vcf.gz"
-BED="${BASE_DIR}/genome_dir/100_random_buscos.bed"
+BED="${BASE_DIR}/genome_dir/1000_random_buscos.bed"
 
 OUTGROUP_GENOME="${BASE_DIR}/genome_dir/outgroup.fna"
 PAT_GENOME="${BASE_DIR}/genome_dir/paternal_ref.fna" 
