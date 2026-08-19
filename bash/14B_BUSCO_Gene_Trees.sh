@@ -176,25 +176,40 @@ for FILE in "$SCRATCHDIR/unaligned_genes"/*.fasta; do
     echo ">> Aligning: $BASENAME"
     mafft --auto "$FILE" > "$ALIGNED_FILE" 2>/dev/null
     
-    # The Goldilocks QC Check (Dry run IQ-TREE to parse SNPs)
+    #Dry run IQ-TREE to parse SNPs for QC
     iqtree3-mpi -s "$ALIGNED_FILE" -m JC -n 0 -pre "$SCRATCHDIR/qc_${BASENAME}" -quiet
-    PI_SITES=$(grep "Number of parsimony informative sites:" "$SCRATCHDIR/qc_${BASENAME}.iqtree" | awk '{print $6}')
     
-    if [ -z "$PI_SITES" ]; then PI_SITES=0; fi
-    echo "   -> Parsimony Informative Sites: $PI_SITES"
+    # Extract PI sites and sequence length
+    PI_SITES=$(awk '/Number of parsimony informative sites:/{print $6}' "$SCRATCHDIR/qc_${BASENAME}.iqtree")
+    PI_SITES=${PI_SITES:-0}
+    ALN_LENGTH=$(awk '/^>/{if(l){print l;exit};next}{l+=length($0)}' "$ALIGNED_FILE")
+    
+    echo "   -> Alignment Length: ${ALN_LENGTH} bp | PI Sites: ${PI_SITES}"
 
-    # STREAMLINE: Discard bad alignments, but skip actual tree generation
-    if [ "$PI_SITES" -lt 10 ]; then
-        echo "   -> SKIPPING: Too conserved (< 10 PI sites). Deleting alignment."
-        rm -f "$ALIGNED_FILE"
-        continue
-    elif [ "$PI_SITES" -gt 150 ]; then
-        echo "   -> SKIPPING: Too noisy/divergent (> 150 PI sites). Deleting alignment."
+    # 1. Check for empty alignments
+    if [ -z "$ALN_LENGTH" ] || [ "$ALN_LENGTH" -eq 0 ]; then
+        echo "   -> SKIPPING: Empty or malformed alignment."
         rm -f "$ALIGNED_FILE"
         continue
     fi
 
-    echo "   -> Alignment passed QC and saved to alignments_clean."
+    # 2. Minimum divergence check
+    if [ "$PI_SITES" -lt 10 ]; then
+        echo "   -> SKIPPING: Too conserved (< 10 PI sites). Deleting alignment."
+        rm -f "$ALIGNED_FILE"
+        continue
+    fi
+
+    # 3. Maximum divergence check (Proportional: >20% PI sites)
+    EXCEEDS_NOISE=$(awk -v pi="$PI_SITES" -v len="$ALN_LENGTH" 'BEGIN {print ((pi/len)*100 > 20.0) ? 1 : 0}')
+    if [ "$EXCEEDS_NOISE" -eq 1 ]; then
+        PERCENT_PI=$(awk -v pi="$PI_SITES" -v len="$ALN_LENGTH" 'BEGIN {printf "%.1f", (pi/len)*100}')
+        echo "   -> SKIPPING: Too noisy/divergent (${PERCENT_PI}% PI sites > 20% threshold). Deleting alignment."
+        rm -f "$ALIGNED_FILE"
+        continue
+    fi
+
+    echo "   -> Alignment passed QC and saved."
 done
 
 # ==============================================================================
