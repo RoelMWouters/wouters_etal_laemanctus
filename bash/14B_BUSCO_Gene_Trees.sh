@@ -140,8 +140,6 @@ if [ "$SKIP_PHASE_3" = false ]; then
     cp "$OUTGROUP_GENOME" "$SCRATCHDIR/outgroup.fasta"
     makeblastdb -in "$SCRATCHDIR/outgroup.fasta" -dbtype nucl -out "$SCRATCHDIR/outgroup_db" > /dev/null
     samtools faidx "$SCRATCHDIR/outgroup.fasta"
-    
-    # STREAMLINE: Paternal reference harvesting removed entirely
 
     for FILE in "$SCRATCHDIR/unaligned_genes"/*.fasta; do
         BASENAME=$(basename "$FILE" .fasta)
