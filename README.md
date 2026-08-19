@@ -6,7 +6,7 @@ Bioinformatic pipelines and scripts accompanying **Wouters et al. Field discover
 **Author:** Roel Wouters | Charles University 
 **Description:** A comprehensive bioinformatics pipeline for *de novo* genome assembly, Hi-C scaffolding, population genomics, and species tree inference in *Laemanctus* lizards.
 
-This repository contains the exact bash and R scripts used to process raw sequencing reads (ONT/Illumina/Hi-C) through to final figures and phylogenomic topologies.
+This repository contains the bash and R scripts used to process raw sequencing reads (ONT/Illumina/Hi-C) through to final figures and phylogenomic topologies.
 
 ## Pipeline Overview
 
@@ -33,9 +33,9 @@ The pipeline is designed for execution on a PBS-scheduled High-Performance Compu
 *   **`11A_Mito_Bait_BLAST.sh` & `11B_Extract_Mito.sh`**: Fetching, blasting, and extracting mitochondrial markers from BAM files.
 *   **`12A_Nuclear_Bait_Blast.sh` & `12B_Nuclear_Marker_Extract.sh`**: Hybrid Python/Bash coordinate calculation and allele extraction via `bcftools consensus`.
 *   **`13A_Supermatrix_Builder.sh`**: MAFFT alignment and native Python supermatrix concatenation.
-*   **`13B_RAxML_Phylogeny.sh`**: Maximum Likelihood tree inference with Rapid Bootstrapping.
-*   **`14A_BUSCO_to_BED.sh` & `14B_BUSCO_Gene_Trees.sh`**: Extraction, ghost-allele purging, and ML gene tree inference for 1000 random BUSCO loci.
-*   **`14C_gCF_calc.sh`**: Gene Concordance Factor calculations using IQTREE3.
+*   **`13B_RAxML_Phylogeny.sh`**: Maximum-Likelihood tree inference with Rapid Bootstrapping.
+*   **`14A_BUSCO_to_BED.sh` & `14B_BUSCO_Gene_Trees.sh`**: Extraction, ghost-allele purging, and ML gene tree inference for 1,000 random BUSCO loci.
+*   **`14C_gCF_calc.sh`**: Gene Concordance Factor calculations using IQ-TREE3.
 *   **`15A_Synteny_Alignment.sh` & `15B_Synteny_JCVI.sh`**: 1:2 ortholog filtering and monkey-patched 3-track JCVI karyotype visualization.
 
 ---
@@ -45,7 +45,7 @@ The pipeline is designed for execution on a PBS-scheduled High-Performance Compu
 Following the upstream bash pipeline, data visualisation is handled locally using a suite of custom R scripts. These scripts generate the following publication figures:
 
 *   **PiHAT and MASH Kmer plots:** Generates a PI_HAT Identity-by-Descent heatmap together with the kmer MASH distance using `ggplot2`.
-*   **Fst Density:** Visualises the distribution of genomic divergence across 100kb windows between populations.
+*   **Fst Density:** Visualises the distribution of genomic divergence across 100-kb windows between populations.
 *   **BAF Manhattan Plot:** Maps the whole-genome B-Allele Frequency landscape across chromosomes using `ggpointdensity`.
 *   **Parental Coverage:** Creates a Manhattan plot visualising the parental mapping coverage  across the 36 chromosomes.
 *   **Phylogenetic Topologies:** Visualises RAxML and gCF trees with bootstrap support using `ggtree`, dynamically truncating extremely long outgroup branches.
