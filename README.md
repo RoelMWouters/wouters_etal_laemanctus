@@ -3,7 +3,7 @@ Bioinformatic pipelines and scripts accompanying **Wouters et al. Field discover
 
 # Laemanctus Phylogenomic & Hybrid Assembly Pipeline
 
-**Author:** Roel Wouters | Charles University 
+**Author:** Roel Wouters | Faculty of Science, Charles University, Prague, Czech Republic 
 **Description:** A comprehensive bioinformatics pipeline for *de novo* genome assembly, Hi-C scaffolding, population genomics, and species tree inference in *Laemanctus* lizards.
 
 This repository contains the bash and R scripts used to process raw sequencing reads (ONT/Illumina/Hi-C) through to final figures and phylogenomic topologies.
