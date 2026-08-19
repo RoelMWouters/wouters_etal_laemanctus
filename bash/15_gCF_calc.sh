@@ -25,7 +25,7 @@ module add iqtree/3.0.1-mpi
 PROJECT_DIR="/path/to/your/project/directory"
 STORAGE_DIR="${PROJECT_DIR}/output_dir/busco_phylogeny"
 ALIGN_DIR="${STORAGE_DIR}/alignments_clean"
-FINAL_OUT_EXCLUDED="${STORAGE_DIR}/gcf_300_final_excluded"
+FINAL_OUT_EXCLUDED="${STORAGE_DIR}/gcf_1000_final_excluded"
 
 # ------------------------------------------------------------------------------
 # META CENTRUM / HPC SCRATCHDIR SETUP
@@ -44,7 +44,7 @@ cp -r "${ALIGN_DIR}" "$SCRATCHDIR/" || { echo "Failed to copy input alignments";
 
 # Define internal scratch working paths
 SCRATCH_ALIGN="$SCRATCHDIR/alignments_clean"
-SCRATCH_OUT="$SCRATCHDIR/gcf_300_final"
+SCRATCH_OUT="$SCRATCHDIR/gcf_1000_final"
 SCRATCH_FILTERED_ALIGN="${SCRATCH_OUT}/alignments_strictly_filtered"
 
 mkdir -p "${SCRATCH_OUT}"
@@ -200,7 +200,7 @@ fi
 # 5. CONCORDANCE FACTOR ANALYSIS (gCF)
 # ------------------------------------------------------------------------------
 echo ">>> [5/5] Running IQ-TREE Gene Concordance Factor (gCF) analysis..."
-iqtree3-mpi -t reference_tree.treefile --gcf filtered_genetrees.trees --prefix subgenome_concordance300 -T 8
+iqtree3-mpi -t reference_tree.treefile --gcf filtered_genetrees.trees --prefix subgenome_concordance1000 -T 8
 
 # ------------------------------------------------------------------------------
 # TRANSFER RESULTS BACK TO PERMANENT STORAGE
