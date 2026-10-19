@@ -25,18 +25,15 @@ The pipeline is designed for execution on a PBS-scheduled High-Performance Compu
 *   **`04_GVCF_Generation.sh`**: Highly parallelized GATK HaplotypeCaller scatter-gather execution.
 *   **`05_Joint_Calling.sh`**: Population joint genotyping and strict paralog purging based on depth thresholds.
 *   **`07_Kmer_Mash.sh`**: Fast distance matrix estimation from raw reads.
-*   **`08_PLINK_Stats.sh`**: LD pruning, PCA, and Identity-By-Descent calculations.
-*   **`09_Calc_Fst.sh`**: Sliding-window Weir & Cockerham Fst calculations.
-*   **`10_Calc_BAF.sh`**: Extraction of allelic depths for B-Allele Frequency analysis.
+*   **`08_IBS_pairwise_snp_divergence.sh`**: Calculates pairwise absolute SNP difference between samples.
+*   **`09_AB_Histograms_Stats.sh`**: Calculates Allele Balance (AB) in offspring compared to mother and shows the distribution of AB in histograms with a modelled curve.
+*   **`10A_LOH_AB_ZooSuyapa.sh`** & **`10B_LOH_AB_UNAH.sh`**: Generate Manhattan plots from normalized heterozygosity (AB) and concordance statistics for all samples.
+*   **`11_Calc_BAF.sh`**: Extraction of allelic depths for B-Allele Frequency analysis.
 
 ### Phase 3: Phylogenomics & Synteny
-*   **`11A_Mito_Bait_BLAST.sh` & `11B_Extract_Mito.sh`**: Fetching, blasting, and extracting mitochondrial markers from BAM files.
-*   **`12A_Nuclear_Bait_Blast.sh` & `12B_Nuclear_Marker_Extract.sh`**: Hybrid Python/Bash coordinate calculation and allele extraction via `bcftools consensus`.
-*   **`13A_Supermatrix_Builder.sh`**: MAFFT alignment and native Python supermatrix concatenation.
-*   **`13B_RAxML_Phylogeny.sh`**: Maximum-Likelihood tree inference with Rapid Bootstrapping.
-*   **`14A_BUSCO_to_BED.sh` & `14B_BUSCO_Gene_Trees.sh`**: Extraction, ghost-allele purging, and ML gene tree inference for 1,000 random BUSCO loci.
-*   **`14C_gCF_calc.sh`**: Gene Concordance Factor calculations using IQ-TREE3.
-*   **`15A_Synteny_Alignment.sh` & `15B_Synteny_JCVI.sh`**: 1:2 ortholog filtering and monkey-patched 3-track JCVI karyotype visualization.
+*   **`12_Mitochondrial_RAxML_tree.sh`**: Pipeline for Mitochondrial gene extraction, alignments and computation of ML trees with RAxML.
+*   **`13A_TargetCapture_BUSCO.sh`** & **`13B_MAFFT_IQTREE_ML_GCF_trees.sh`**: Target capture 2000 random BUSCO loci (CDS), align, filter and generate ML and concordance trees.
+*   **`14A_Synteny_Alignment.sh` & `14B_Synteny_JCVI.sh`**: 1:2 ortholog filtering and monkey-patched 3-track JCVI karyotype visualization.
 
 ---
 
@@ -44,13 +41,12 @@ The pipeline is designed for execution on a PBS-scheduled High-Performance Compu
 
 Following the upstream bash pipeline, data visualisation is handled locally using a suite of custom R scripts. These scripts generate the following publication figures:
 
-*   **PiHAT and MASH Kmer plots:** Generates a PI_HAT Identity-by-Descent heatmap together with the kmer MASH distance using `ggplot2`.
-*   **Fst Density:** Visualises the distribution of genomic divergence across 100-kb windows between populations.
 *   **BAF Manhattan Plot:** Maps the whole-genome B-Allele Frequency landscape across chromosomes using `ggpointdensity`.
-*   **Parental Coverage:** Creates a Manhattan plot visualising the parental mapping coverage  across the 36 chromosomes.
-*   **Phylogenetic Topologies:** Visualises RAxML and gCF trees with bootstrap support using `ggtree`, dynamically truncating extremely long outgroup branches.
 *   **Haplotype Networks:** Builds mitochondrial haplotype networks using `ape` and `pegas`, mapping taxonomic sample frequencies and capping extreme mutational steps.
-
+*   **ML and eGCF plots:** Make plots for the uncollapsed Maximum Likelihood tree and collapsed effective Gene Concordance tree.
+*   **Parental Coverage:** Creates a Manhattan plot visualising the parental mapping coverage  across the 36 chromosomes.
+*   **Mitochondrial Topology:** Plots the RAxML topology for the mitochondrial markers
+*   **Pairwise Matrix:** Plots the pairwise SNP differences (absolute and 1-IBS) into a matrix.
 ---
 
 ## Data Availability
