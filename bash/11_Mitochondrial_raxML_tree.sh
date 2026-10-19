@@ -250,4 +250,4 @@ raxmlHPC-PTHREADS-SSE3 -T 8 \
     -s RAxML_MT_Supermatrix.phy \
     -n mt_markers
 
-echo "=== PART 3 PIPELINE FINISHED SUCCESSFULLY at $(date) ==="
+echo "=== PIPELINE FINISHED SUCCESSFULLY at $(date) ==="
