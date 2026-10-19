@@ -7,10 +7,11 @@
 #PBS -j oe
 
 # ==============================================================================
-# PHYLOGENOMIC PIPELINE MITOCHONDRIAL PHYLOGENY
-# Automatically fetches mitochondrial baits, locates MT coordinates 
-# in the reference genomes, extracts consensus MT sequences from sample BAM files, 
-# aligns them with MAFFT, and infers a Maximum Likelihood tree using RAxML.
+# PHYLOGENOMIC PIPELINE - PART 3: MITOCHONDRIAL PHYLOGENY (GENE-BY-GENE)
+# Description: Uses Biopython to auto-fetch specific mitochondrial coding genes 
+# (COI, ND4, CYTB) as baits. Identifies mapping coordinates across reference and 
+# outgroup genomes, extracts BAM consensus locus-by-locus, aligns each gene 
+# independently with MAFFT, and concatenates them into a RAxML supermatrix.
 # ==============================================================================
 
 set -euo pipefail
@@ -26,14 +27,14 @@ echo "Job started on $(hostname) at $(date)"
 PROJECT_DIR="/path/to/project"
 GENOME_DIR="${PROJECT_DIR}/genomes"
 BAM_DIR="${PROJECT_DIR}/bam_output"
-BASE_OUT="${PROJECT_DIR}/output/part3_mitochondrial"
+BASE_OUT="${PROJECT_DIR}/output/mitochondrial"
 
 # EXPLICIT REFERENCE DEFINITIONS
 OUTGROUP_REF="${GENOME_DIR}/basvit_genome.fna"
 PARENT1_REF="${GENOME_DIR}/lser_ref.fna"
-
-# CRITICAL: This MUST be the genome the BAMs were mapped against
 BAM_MAPPING_REF="${GENOME_DIR}/ljul_genome.fasta"  
+# TARGET GENES
+TARGET_MT_GENES=("COI" "ND4" "CYTB")
 
 mkdir -p "$BASE_OUT"/{1_baits,2_extracted_mt,3_alignments,4_raxml_tree}
 mkdir -p work_blast work_bams
@@ -57,50 +58,92 @@ eval "$(conda shell.bash hook)"
 conda activate "${ENV_PREFIX}"
 
 # ==============================================================================
-# 3. BAIT FETCHING & BLAST SEARCH
+# 3. AUTOMATED BAIT FETCHING (BIOPYTHON)
 # ==============================================================================
-echo "=== FETCHING MT BAIT & CREATING BLAST DATABASES ==="
-BAIT_FASTA="${BASE_OUT}/1_baits/mito_bait.fasta"
+echo "=== FETCHING SPECIFIC MT BAITS (COI, ND4, CYTB) ==="
+cd "${BASE_OUT}/1_baits"
 
-if [ ! -f "$BAIT_FASTA" ]; then
-    esearch -db nucleotide -query "Anolis carolinensis mitochondrion, complete genome" | \
-    efetch -format fasta > "$BAIT_FASTA"
-fi
+cat << 'EOF' > fetch_mt_baits.py
+import os
+from Bio import Entrez, SeqIO
 
-# Create BLAST DBs for the all relevant genomes
+Entrez.email = "user@institute.edu"
+print("Downloading NC_010966.1 (Anolis carolinensis mitochondrion)...")
+try:
+    handle = Entrez.efetch(db="nucleotide", id="NC_010966.1", rettype="gb", retmode="text")
+    record = SeqIO.read(handle, "genbank")
+    handle.close()
+    
+    # Map GenBank annotations to our desired file names
+    targets = {"COX1": "COI", "ND4": "ND4", "CYTB": "CYTB"}
+    extracted = 0
+    
+    for feature in record.features:
+        if feature.type == "CDS":
+            gene = feature.qualifiers.get("gene", [""])[0]
+            if gene in targets:
+                out_name = targets[gene]
+                seq = feature.extract(record.seq)
+                with open(f"{out_name}_bait.fasta", "w") as f:
+                    f.write(f">{out_name}_Anolis_carolinensis\n{seq}\n")
+                print(f"  -> Successfully extracted {out_name}")
+                extracted += 1
+                
+    if extracted < 3: print("WARNING: Not all target genes were found.")
+except Exception as e:
+    print("Error fetching baits:", e)
+EOF
+
+python3 fetch_mt_baits.py
+cd "$SCRATCHDIR/work_blast"
+
+# ==============================================================================
+# 4. GENE-BY-GENE BLAST SEARCH
+# ==============================================================================
+echo "=== CREATING BLAST DATABASES ==="
 makeblastdb -in "$BAM_MAPPING_REF" -dbtype nucl -out mapping_ref_db >/dev/null
 makeblastdb -in "$PARENT1_REF" -dbtype nucl -out parent_db >/dev/null
 makeblastdb -in "$OUTGROUP_REF" -dbtype nucl -out outgroup_db >/dev/null
 
-echo "=== LOCATING MT COORDINATES ==="
-# 3A. Find MT in the BAM mapping reference (ONT Genome)
-blastn -task blastn -query "$BAIT_FASTA" -db mapping_ref_db -outfmt "6 sseqid sstart send qseqid" -max_target_seqs 1 -max_hsps 1 > blast_mapping.txt
-awk '{OFS="\t"; if ($2 < $3) print $1, $2-1, $3, $4; else print $1, $3-1, $2, $4}' blast_mapping.txt > coords_mapping.bed
+echo "=== LOCATING MT COORDINATES FOR EACH GENE ==="
+> coords_mapping_all.bed
+> coords_parent_all.bed
+> coords_outgroup_all.bed
 
-# 3B. Find MT in the Pure Parent 1 (L. serratus)
-blastn -task blastn -query "$BAIT_FASTA" -db parent_db -outfmt "6 sseqid sstart send qseqid" -max_target_seqs 1 -max_hsps 1 > blast_parent.txt
-awk '{OFS="\t"; if ($2 < $3) print $1, $2-1, $3, $4; else print $1, $3-1, $2, $4}' blast_parent.txt > coords_parent.bed
+for GENE in "${TARGET_MT_GENES[@]}"; do
+    BAIT="${BASE_OUT}/1_baits/${GENE}_bait.fasta"
+    
+    # 4A. Find gene in the BAM mapping reference
+    blastn -task blastn -query "$BAIT" -db mapping_ref_db -outfmt "6 sseqid sstart send qseqid" -max_target_seqs 1 -max_hsps 1 > blast_mapping_${GENE}.txt
+    awk -v g="$GENE" '{OFS="\t"; if ($2 < $3) print $1, $2-1, $3, g; else print $1, $3-1, $2, g}' blast_mapping_${GENE}.txt >> coords_mapping_all.bed
 
-# 3C. Find MT in the Outgroup reference
-blastn -task blastn -query "$BAIT_FASTA" -db outgroup_db -outfmt "6 sseqid sstart send qseqid" -max_target_seqs 1 -max_hsps 1 > blast_outgroup.txt
-awk '{OFS="\t"; if ($2 < $3) print $1, $2-1, $3, $4; else print $1, $3-1, $2, $4}' blast_outgroup.txt > coords_outgroup.bed
+    # 4B. Find gene in Pure Parent 1 (L. serratus)
+    blastn -task blastn -query "$BAIT" -db parent_db -outfmt "6 sseqid sstart send qseqid" -max_target_seqs 1 -max_hsps 1 > blast_parent_${GENE}.txt
+    awk -v g="$GENE" '{OFS="\t"; if ($2 < $3) print $1, $2-1, $3, g; else print $1, $3-1, $2, g}' blast_parent_${GENE}.txt >> coords_parent_all.bed
+
+    # 4C. Find gene in Outgroup
+    blastn -task blastn -query "$BAIT" -db outgroup_db -outfmt "6 sseqid sstart send qseqid" -max_target_seqs 1 -max_hsps 1 > blast_outgroup_${GENE}.txt
+    awk -v g="$GENE" '{OFS="\t"; if ($2 < $3) print $1, $2-1, $3, g; else print $1, $3-1, $2, g}' blast_outgroup_${GENE}.txt >> coords_outgroup_all.bed
+done
 
 # ==============================================================================
-# 4. REFERENCE MT EXTRACTION
+# 5. PURE REFERENCE MT EXTRACTION
 # ==============================================================================
-echo "=== EXTRACTING PURE OUTGROUP & PARENT REFERENCE MT SEQUENCES ==="
+echo "=== EXTRACTING OUTGROUP & PARENT REFERENCE GENES ==="
 cd ../work_bams
 
-bedtools getfasta -fi "$PARENT1_REF" -bed ../work_blast/coords_parent.bed -nameOnly | \
-    sed 's/^>.*/>Parent1_Ref/' > Parent1_Ref_mt.fasta
+# Extract from Parent and dynamically name files based on the BED gene column
+bedtools getfasta -fi "$PARENT1_REF" -bed ../work_blast/coords_parent_all.bed -nameOnly > parent1_all_mt.fasta
+awk '/^>/ {gene=substr($1,2); file="Parent1_Ref_" gene ".fasta"; print ">Parent1_Ref" > file; next} {print >> file}' parent1_all_mt.fasta
 
-bedtools getfasta -fi "$OUTGROUP_REF" -bed ../work_blast/coords_outgroup.bed -nameOnly | \
-    sed 's/^>.*/>Outgroup/' > Outgroup_mt.fasta
+# Extract from Outgroup
+bedtools getfasta -fi "$OUTGROUP_REF" -bed ../work_blast/coords_outgroup_all.bed -nameOnly > outgroup_all_mt.fasta
+awk '/^>/ {gene=substr($1,2); file="Outgroup_" gene ".fasta"; print ">Outgroup" > file; next} {print >> file}' outgroup_all_mt.fasta
 
 # ==============================================================================
-# 5. SAMPLE BAM CONSENSUS EXTRACTION
+# 6. SAMPLE BAM CONSENSUS EXTRACTION
 # ==============================================================================
-echo "=== EXTRACTING CONSENSUS MT FROM BAM FILES ==="
+echo "=== EXTRACTING CONSENSUS GENES FROM BAM FILES ==="
 for BAM in "${BAM_DIR}"/*.bam; do
     SAMPLE=$(basename "${BAM}" _final_markdup.bam)
     echo "Processing $SAMPLE..."
@@ -108,7 +151,7 @@ for BAM in "${BAM_DIR}"/*.bam; do
     while read -r contig start end gene; do
         REGION="${contig}:${start}-${end}"
         
-        # Generates a consensus FASTA for this specific region using the ONT reference
+        # Generates a consensus FASTA for this specific gene
         samtools view -b "${BAM}" "${REGION}" | \
           bcftools mpileup -Ou -f "${BAM_MAPPING_REF}" - 2>/dev/null | \
           bcftools call -c - 2>/dev/null | \
@@ -117,27 +160,26 @@ for BAM in "${BAM_DIR}"/*.bam; do
           
         # Rename header to the sample name
         sed -i "1s/.*/\>${SAMPLE}/" "${SAMPLE}_${gene}.fasta"
-    done < ../work_blast/coords_mapping.bed
+    done < ../work_blast/coords_mapping_all.bed
 done
 
-# Compile all sequences by bait target
-grep "^>" "$BAIT_FASTA" | awk '{print $1}' | sed 's/>//' > gene_list.txt
-while read -r gene; do
-    cat Parent1_Ref_mt.fasta Outgroup_mt.fasta *_${gene}.fasta > "${BASE_OUT}/2_extracted_mt/${gene}_compiled.fasta"
-done < gene_list.txt
+# Compile all sequences by gene
+for GENE in "${TARGET_MT_GENES[@]}"; do
+    cat Parent1_Ref_${GENE}.fasta Outgroup_${GENE}.fasta *_${GENE}.fasta > "${BASE_OUT}/2_extracted_mt/${GENE}_compiled.fasta"
+done
 
 # ==============================================================================
-# 6. ALIGNMENT & SUPERMATRIX CONCATENATION
+# 7. ALIGNMENT & SUPERMATRIX CONCATENATION
 # ==============================================================================
-echo "=== ALIGNING MT SEQUENCES ==="
+echo "=== ALIGNING MT GENES LOCUS-BY-LOCUS ==="
 cd "${BASE_OUT}/3_alignments"
 
-while read -r gene; do
-    echo "Aligning $gene..."
-    mafft --auto --quiet "${BASE_OUT}/2_extracted_mt/${gene}_compiled.fasta" > "${gene}_aligned.fasta"
-done < ../../work_bams/gene_list.txt
+for GENE in "${TARGET_MT_GENES[@]}"; do
+    echo "Aligning $GENE..."
+    mafft --auto --quiet "${BASE_OUT}/2_extracted_mt/${GENE}_compiled.fasta" > "${GENE}_aligned.fasta"
+done
 
-echo "=== BUILDING SUPERMATRIX ==="
+echo "=== BUILDING CONCATENATED SUPERMATRIX ==="
 python3 - << 'EOF'
 import glob
 from collections import defaultdict
@@ -160,7 +202,7 @@ for aln in alignments:
                 seq.append(line)
         if header: super_dict[header] += "".join(seq)
 
-# Pad missing data to ensure perfectly rectangular matrix
+# Pad missing data to ensure a perfectly rectangular alignment matrix
 max_len = max(len(s) for s in super_dict.values())
 for k, v in super_dict.items():
     if len(v) < max_len: super_dict[k] = v + ("-" * (max_len - len(v)))
@@ -171,7 +213,7 @@ with open("RAxML_MT_Supermatrix.fasta", "w") as out:
 EOF
 
 # ==============================================================================
-# 7. RAxML TREE INFERENCE
+# 8. RAxML TREE INFERENCE
 # ==============================================================================
 echo "=== RUNNING RAxML INFERENCE ==="
 cd "${BASE_OUT}/4_raxml_tree"
@@ -199,7 +241,6 @@ with open(phy_out, "w") as f:
 EOF
 
 # Run RAxML Rapid Bootstrapping (-N 100)
-# Outgroup name (-o) explicitly matches the extracted reference
 raxmlHPC-PTHREADS-SSE3 -T 8 \
     -f a \
     -x 12345 -p 12345 \
