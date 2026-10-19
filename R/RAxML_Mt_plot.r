@@ -12,7 +12,7 @@ library(ggplot2)
 # ==========================================
 setwd("/path/to/working/directory")
 
-INPUT_TREE <- "RAxML_bipartitions.Maternal_Full_Tree"
+INPUT_TREE <- "RAxML_bipartitions.mt_markers"
 OUTPUT_IMAGE <- "RAxML_Mito_Topology_Final.png"
 PLOT_TITLE <- "Mitochondrial Topology with Bootstrap Support"
 OUTGROUP_ID <- "basvit"
