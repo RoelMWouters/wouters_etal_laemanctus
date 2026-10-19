@@ -248,6 +248,6 @@ raxmlHPC-PTHREADS-SSE3 -T 8 \
     -m GTRGAMMA \
     -o Outgroup \
     -s RAxML_MT_Supermatrix.phy \
-    -n Mito_Topology_Final
+    -n mt_markers
 
 echo "=== PART 3 PIPELINE FINISHED SUCCESSFULLY at $(date) ==="
