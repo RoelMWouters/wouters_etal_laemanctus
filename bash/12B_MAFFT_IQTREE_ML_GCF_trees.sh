@@ -69,7 +69,7 @@ while read -r BUSCO; do
     OUT_FASTA="unaligned/${BUSCO}.fasta"
     
     # Merge references and exonerated CDS
-    cat "${INPUT_SEQS}/ref_and_ont_seqs/${BUSCO}_"*.fasta \
+    cat "${INPUT_SEQS}/ref_seqs/${BUSCO}_"*.fasta \
         "${INPUT_SEQS}/exonerated_cds/"*"_${BUSCO}_"*.fasta > "$OUT_FASTA" 2>/dev/null
 
     # Strictly omit any sequence that Exonerate fragmented into multiple pieces
