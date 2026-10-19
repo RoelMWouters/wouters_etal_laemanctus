@@ -236,4 +236,4 @@ Rscript plot_manhattan_only.R "$OUTPUT_DIR" "$FAI_FILE"
 # 6. EXPORT
 # ==============================================================================
 cp "F_lineage.tsv" "C_lineage.tsv" "$STATS_FILE" "$OUTPUT_DIR/"
-echo "Part 5A pipeline completed successfully!"
+echo "pipeline completed successfully!"
