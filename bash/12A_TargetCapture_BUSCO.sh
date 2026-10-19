@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -N TargetCapture_BUSCO_genes
+#PBS -N Part1_TargetCapture
 #PBS -l select=1:ncpus=32:mem=256gb:scratch_local=250gb
 #PBS -l walltime=24:00:00
 #PBS -M user@institute.edu
@@ -8,10 +8,10 @@
 
 # ==============================================================================
 # PHYLOGENOMIC PIPELINE - PART 1: LOCUS ASSEMBLY & EXTRACTION
-# Description: Uses BUSCO to identify single-copy orthologs in parental genomes + outgroup 
-# and duplicated (2-copy) orthologs in the hybrid genome. Extracts these 
-# regions from Illumina BAM files, performs local SPAdes assembly, and uses 
-# exonerate to pull pure CDS sequences.
+# Uses BUSCO to identify orthologs. Extracts these regions from 
+# Illumina BAM files, performs local SPAdes assembly, and uses Exonerate to 
+# pull pure CDS sequences. Exonerate is run on the parental 
+# and outgroup reference genomes as well to ensure perfectly matching exon boundaries.
 # ==============================================================================
 
 set -euo pipefail
@@ -31,16 +31,15 @@ HYBRID_ONT="${GENOME_DIR}/ljul_genome.fasta"
 
 ILLUMINA_SAMPLES=("C10" "C09" "C01" "C02" "C03" "C04" "C05" "C06" "F01" "F03")
 
-# Structured Output Architecture
-BASE_OUT="${PROJECT_DIR}/output/part1_bam_spades"
+BASE_OUT="${PROJECT_DIR}/output/part1"
 BUSCO_BACKUP="${BASE_OUT}/0_busco_checkpoints"
 SEQ_OUT="${BASE_OUT}/1_extracted_sequences"
 META_OUT="${BASE_OUT}/metadata"
 
-mkdir -p "$BUSCO_BACKUP" "$SEQ_OUT/exonerated_cds" "$SEQ_OUT/ref_and_ont_seqs" "$META_OUT"
+mkdir -p "$BUSCO_BACKUP" "$SEQ_OUT/exonerated_cds" "$SEQ_OUT/ref_seqs" "$META_OUT"
 SUMMARY_FILE="${META_OUT}/pipeline_summary_spades.txt"
 
-echo "=== PART 1: BAM-TO-SPADES + EXONERATE TARGET CAPTURE (PURE EXONS) ===" > "$SUMMARY_FILE"
+echo "=== PART 1: BAM-TO-SPADES + EXONERATE TARGET CAPTURE ===" > "$SUMMARY_FILE"
 echo "Pipeline started at: $(date)" >> "$SUMMARY_FILE"
 
 # ==============================================================================
@@ -56,18 +55,16 @@ export CONDA_PKGS_DIRS="$SCRATCHDIR/conda_pkgs"
 export CONDA_ENVS_DIRS="$SCRATCHDIR/conda_envs"
 mkdir -p "$CONDA_PKGS_DIRS" "$CONDA_ENVS_DIRS"
 
-# Install required tools
 mamba create -n bam_spades_env -c conda-forge -c bioconda \
     python=3.11 spades=3.15.5 samtools=1.19 busco=5.7.1 biopython=1.80 seqtk parallel exonerate -y
 eval "$(conda shell.bash hook)"
 conda activate bam_spades_env
 
 # ==============================================================================
-# 3. SMART CHECKPOINT: INDEPENDENT BUSCO RUNS
+# 3. INDEPENDENT BUSCO RUNS
 # ==============================================================================
 echo "=== CHECKING FOR EXISTING BUSCO RUNS ==="
 
-# Check/Run Parent 1
 if [ -d "${BUSCO_BACKUP}/BUSCO_Lser" ]; then
     cp -r "${BUSCO_BACKUP}/BUSCO_Lser" .
 else
@@ -76,7 +73,6 @@ else
     cp -r BUSCO_Lser "$BUSCO_BACKUP/"
 fi
 
-# Check/Run Outgroup
 if [ -d "${BUSCO_BACKUP}/BUSCO_Basvit" ]; then
     cp -r "${BUSCO_BACKUP}/BUSCO_Basvit" .
 else
@@ -85,7 +81,6 @@ else
     cp -r BUSCO_Basvit "$BUSCO_BACKUP/"
 fi
 
-# Check/Run Hybrid ONT (Used to identify exactly 2-copy genes)
 if [ -d "${BUSCO_BACKUP}/BUSCO_Hybrid_ONT" ]; then
     cp -r "${BUSCO_BACKUP}/BUSCO_Hybrid_ONT" .
 else
@@ -95,19 +90,16 @@ else
 fi
 
 # ==============================================================================
-# 4. GENE SELECTION (STRICT FILTERING)
+# 4. GENE SELECTION (FILTERING)
 # ==============================================================================
 echo "=== SELECTING GENES ==="
-
 awk '$2=="Complete" {print $1}' BUSCO_Lser/run_sauropsida_odb10/full_table.tsv | sort > lser_sc.txt
 awk '$2=="Complete" {print $1}' BUSCO_Basvit/run_sauropsida_odb10/full_table.tsv | sort > basvit_sc.txt
 awk '$2=="Duplicated" {print $1}' BUSCO_Hybrid_ONT/run_sauropsida_odb10/full_table.tsv | sort | uniq -c | awk '$1==2 {print $2}' > ont_dup.txt
 
-# Intersect: Must be Single Copy in both parents AND Exactly Duplicated in Hybrid
 comm -12 lser_sc.txt basvit_sc.txt > common_single.txt
 comm -12 common_single.txt ont_dup.txt > valid_targets.txt
 
-# Cap at 2000 random loci
 TOTAL_VALID=$(wc -l < valid_targets.txt)
 if [ "$TOTAL_VALID" -gt 2000 ]; then
     shuf -n 2000 valid_targets.txt > target_busco_ids.txt
@@ -118,12 +110,11 @@ fi
 echo "Genes Selected for BAM Extraction: $(wc -l < target_busco_ids.txt)" >> "$SUMMARY_FILE"
 
 # ==============================================================================
-# 5. EXTRACT HYBRID GENOME COORDINATES AND BUILD TASK LIST
+# 5. EXTRACT HYBRID GENOME COORDINATES AND BUILD HYBRID TASK LIST
 # ==============================================================================
 awk 'NR==FNR{a[$1]; next} $1 in a && $2=="Duplicated" {print $1, $3, $4, $5}' \
     target_busco_ids.txt BUSCO_Hybrid_ONT/run_sauropsida_odb10/full_table.tsv | sort > ont_coords_raw.txt
 
-# Assign "copy1" and "copy2"
 awk '{
     if ($1 == prev_id) {copy="copy2"} else {copy="copy1"}
     prev_id=$1;
@@ -136,13 +127,12 @@ for SAMPLE in "${ILLUMINA_SAMPLES[@]}"; do
 done
 
 # ==============================================================================
-# 6. PARALLEL ASSEMBLE & EXONERATE
+# 6. PARALLEL HYBRID SPAdes & EXONERATE
 # ==============================================================================
 process_gene_assembly() {
     SAMPLE=$1; BUSCO=$2; CHROM=$3; START=$4; END=$5; COPY=$6
     BAM_DIR=$7; OUT_DIR=$8; SCRATCH=$9
     
-    # Pad region by 1000bp
     PAD_START=$(( START > 1000 ? START - 1000 : 1 ))
     PAD_END=$(( END + 1000 ))
     REGION="${CHROM}:${PAD_START}-${PAD_END}"
@@ -160,19 +150,16 @@ process_gene_assembly() {
             REF_SEQ="${SCRATCH}/BUSCO_Lser/run_sauropsida_odb10/busco_sequences/single_copy_busco_sequences/${BUSCO}.fna"
             
             if [ -f "$REF_SEQ" ]; then
-                # Search ALL contigs, use coding2genome, extract pure CDS
                 exonerate --model coding2genome --query "$REF_SEQ" --target "${WORK_DIR}/spades/contigs.fasta" \
                     --bestn 1 --showvulgar no --showalignment no \
                     --ryo "\n@@@START@@@\n%tcs\n@@@END@@@\n" > "${WORK_DIR}/exo.out" 2>/dev/null
                 
-                # Format to fasta, strip gaps, convert to uppercase
                 awk -v name=">${SAMPLE}_${BUSCO}_${COPY}" '
                     /^@@@START@@@$/ {flag=1; print name; next}
                     /^@@@END@@@$/ {flag=0; next}
                     flag { gsub(/-/, ""); if (length($0) > 0) print toupper($0) }
                 ' "${WORK_DIR}/exo.out" > "${OUT_DIR}/${SAMPLE}_${BUSCO}_${COPY}.fasta"
                 
-                # Cleanup empties
                 if [ -f "${OUT_DIR}/${SAMPLE}_${BUSCO}_${COPY}.fasta" ] && [ $(wc -l < "${OUT_DIR}/${SAMPLE}_${BUSCO}_${COPY}.fasta") -lt 2 ]; then
                     rm -f "${OUT_DIR}/${SAMPLE}_${BUSCO}_${COPY}.fasta"
                 fi
@@ -183,16 +170,84 @@ process_gene_assembly() {
 }
 export -f process_gene_assembly
 
-# Run parallel assemblies
-mkdir -p scratch_out
-parallel --colsep ' ' --joblog "${META_OUT}/parallel_spades.log" -j 16 \
-    "process_gene_assembly {1} {2} {3} {4} {5} {6} $BAM_DIR scratch_out$SCRATCHDIR" :::: parallel_tasks.txt
+# ==============================================================================
+# 7. PARALLEL REFERENCE EXONERATE
+# ==============================================================================
+process_reference_exonerate() {
+    TAXON=$1; BUSCO=$2; GENOME=$3; TABLE=$4; OUT_DIR=$5; SCRATCH=$6
+    
+    COORD_LINE=$(awk -v b="$BUSCO" '$1==b && $2=="Complete" {print $3, $4, $5; exit}' "$TABLE")
+    if [ -z "$COORD_LINE" ]; then return; fi
+    read -r CHROM START END <<< "$COORD_LINE"
+    
+    if [ "$START" -lt "$END" ]; then
+        TRUE_START=$START; TRUE_END=$END
+    else
+        TRUE_START=$END; TRUE_END=$START
+    fi
+    
+    PAD_START=$(( TRUE_START > 1000 ? TRUE_START - 1000 : 1 ))
+    PAD_END=$(( TRUE_END + 1000 ))
+    REGION="${CHROM}:${PAD_START}-${PAD_END}"
+    
+    WORK_DIR="${SCRATCH}/work_${TAXON}_${BUSCO}"
+    mkdir -p "$WORK_DIR"
+    
+    samtools faidx "$GENOME" "$REGION" > "${WORK_DIR}/target.fasta" 2>/dev/null
+    
+    # Query is ALWAYS the Parent1 BUSCO CDS to ensure identical models
+    REF_SEQ="${SCRATCH}/BUSCO_Lser/run_sauropsida_odb10/busco_sequences/single_copy_busco_sequences/${BUSCO}.fna"
+    
+    if [ -f "$REF_SEQ" ] && [ -s "${WORK_DIR}/target.fasta" ]; then
+        exonerate --model coding2genome --query "$REF_SEQ" --target "${WORK_DIR}/target.fasta" \
+            --bestn 1 --showvulgar no --showalignment no \
+            --ryo "\n@@@START@@@\n%tcs\n@@@END@@@\n" > "${WORK_DIR}/exo.out" 2>/dev/null
+            
+        awk -v name=">${TAXON}" '
+            /^@@@START@@@$/ {flag=1; print name; next}
+            /^@@@END@@@$/ {flag=0; next}
+            flag { gsub(/-/, ""); if (length($0) > 0) print toupper($0) }
+        ' "${WORK_DIR}/exo.out" > "${OUT_DIR}/${BUSCO}_${TAXON}.fasta"
+        
+        if [ -f "${OUT_DIR}/${BUSCO}_${TAXON}.fasta" ] && [ $(wc -l < "${OUT_DIR}/${BUSCO}_${TAXON}.fasta") -lt 2 ]; then
+            rm -f "${OUT_DIR}/${BUSCO}_${TAXON}.fasta"
+        fi
+    fi
+    rm -rf "$WORK_DIR"
+}
+export -f process_reference_exonerate
 
 # ==============================================================================
-# 7. EXPORT TO PERMANENT STORAGE
+# 8. RUN BOTH PARALLEL EXTRACTIONS
+# ==============================================================================
+echo "=== RUNNING LOCAL ASSEMBLIES & HYBRID EXONERATE ==="
+mkdir -p scratch_out scratch_ref
+
+parallel --colsep ' ' --joblog "${META_OUT}/parallel_spades.log" -j 16 \
+    "process_gene_assembly {1} {2} {3} {4} {5} {6} $BAM_DIR scratch_out $SCRATCHDIR" :::: parallel_tasks.txt
+
+echo "=== RUNNING REFERENCE GENOME EXONERATE ==="
+# Index references for faidx
+samtools faidx "$PARENT1_REF"
+samtools faidx "$OUTGROUP"
+
+> ref_tasks.txt
+while read -r BUSCO; do
+    [ -z "$BUSCO" ] && continue
+    echo "Parent1_Ref $BUSCO $PARENT1_REF BUSCO_Lser/run_sauropsida_odb10/full_table.tsv" >> ref_tasks.txt
+    echo "Outgroup $BUSCO $OUTGROUP BUSCO_Basvit/run_sauropsida_odb10/full_table.tsv" >> ref_tasks.txt
+done < target_busco_ids.txt
+
+parallel --colsep ' ' --joblog "${META_OUT}/parallel_references.log" -j 16 \
+    "process_reference_exonerate {1} {2} {3} {4} scratch_ref $SCRATCHDIR" :::: ref_tasks.txt
+
+# ==============================================================================
+# 9. EXPORT TO PERMANENT STORAGE
 # ==============================================================================
 rsync -a scratch_out/ "$SEQ_OUT/exonerated_cds/"
-cp target_busco_ids.txt parallel_tasks.txt "${META_OUT}/"
+rsync -a scratch_ref/ "$SEQ_OUT/ref_seqs/"
+cp target_busco_ids.txt parallel_tasks.txt ref_tasks.txt "${META_OUT}/"
 
-echo "Total SPAdes contigs successfully assembled & exonerated: $(ls scratch_out 2>/dev/null \vert{} wc -l)" >> "$SUMMARY_FILE"
+echo "Total Hybrid SPAdes Contigs Exonerated: $(ls scratch_out 2>/dev/null | wc -l)" >> "$SUMMARY_FILE"
+echo "Total References Exonerated: $(ls scratch_ref 2>/dev/null | wc -l)" >> "$SUMMARY_FILE"
 echo "Part 1 completed successfully at: $(date)" >> "$SUMMARY_FILE"
