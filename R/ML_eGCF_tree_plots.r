@@ -262,13 +262,10 @@ ggsave("Laemanctus_Fig1_Clean_ML_Tree.pdf", plot = p_fig1_ml, width = 16, height
 
 
 # ==============================================================================
-# FIGURE II: COLLAPSED BINOMIAL eGCF CONCORDANCE TREE
-# Collapses noisy polytomies (p >= 0.001) while preserving layout
+# FIGURE ii: COLLAPSED eGCF CONCORDANCE TREE (eGCF > 50%)
 # ==============================================================================
 egcf_tree <- rooted_tree
 
-# Use "ROW_X" tags to prevent ape::write.tree() from stripping 
-# out spaces/parentheses or causing array shifts when branches collapse.
 for (i in seq_along(egcf_tree$node.label)) {
   lbl <- egcf_tree$node.label[i]
   node_num <- Ntip + i
@@ -277,7 +274,8 @@ for (i in seq_along(egcf_tree$node.label)) {
   if (grepl("/", lbl) && length(edge_idx) == 1 && !is.na(node_map[i])) {
     row_data <- cf_stats[node_map[i], ]
     
-    if (is.na(row_data$binom_p) | row_data$binom_p >= 0.001) {
+    # Collapse if eGCF is missing or strictly below 50
+    if (is.na(row_data$eGCF) || row_data$eGCF < 51) {
       egcf_tree$edge.length[edge_idx] <- 0
       egcf_tree$node.label[i] <- "BLANK" 
     } else {
@@ -292,7 +290,6 @@ collapsed_tree <- di2multi(egcf_tree, tol = 1e-6)
 collapsed_tree <- read.tree(text = write.tree(collapsed_tree))
 collapsed_tree <- lock_figtree_order(collapsed_tree, ggtree_bottom_to_top)
 
-# Map staged tags back to formatting
 for (i in seq_along(collapsed_tree$node.label)) {
   lbl <- collapsed_tree$node.label[i]
   if (grepl("^ROW_", lbl)) {
@@ -325,12 +322,16 @@ p_egcf$data <- p_egcf$data %>%
 p_fig2_egcf <- p_egcf +
   geom_tiplab(size = 4.2, fontface = "italic", offset = 0.0015) +
   geom_nodepoint(data = function(d) filter(d, !is.na(support_text)), color = node_blue, size = 2.8) +
+  # Lifted blue support text higher (vjust = -1.2)
   geom_text(aes(x = branch, y = y, label = support_text), color = node_blue, size = 3.2, fontface = "bold", vjust = -1.2, na.rm = TRUE) +
+  # Dropped red branch length text lower (vjust = 1.8)
   geom_text(aes(x = branch, y = y, label = brlen_text), color = brlen_red, size = 3.2, vjust = 1.8, na.rm = TRUE) +
   geom_text(aes(x = branch, y = y, label = slash_mark), color = "black", size = 6, fontface = "bold", vjust = 0.4, na.rm = TRUE) +
   theme_tree2() + hexpand(0.35) + vexpand(0.05) + coord_cartesian(clip = "off") +
   theme(plot.title = element_text(size = 14, face = "bold", hjust = 0), plot.margin = margin(t = 20, r = 40, b = 20, l = 15))
 
 print(p_fig2_egcf)
-ggsave("Laemanctus_Fig2_Clean_Binomial_eGCF.jpg", plot = p_fig2_egcf, width = 16, height = 12, dpi = 300)
-ggsave("Laemanctus_Fig2_Clean_Binomial_eGCF.pdf", plot = p_fig2_egcf, width = 16, height = 12)
+# Stretched canvas size to 16x12
+ggsave("Laemanctus_Fig2_Clean_Collapsed_eGCF_50.jpg", plot = p_fig2_egcf, width = 16, height = 12, dpi = 300)
+ggsave("Laemanctus_Fig2_Clean_Collapsed_eGCF_50.pdf", plot = p_fig2_egcf, width = 16, height = 12)
+
