@@ -32,7 +32,7 @@ The pipeline is designed for execution on a PBS-scheduled High-Performance Compu
 
 ### Phase 3: Phylogenomics & Synteny
 *   **`12_Mitochondrial_RAxML_tree.sh`**: Pipeline for Mitochondrial gene extraction, alignments and computation of ML trees with RAxML.
-*   **`13A_TargetCapture_BUSCO.sh`** & **`13B_MAFFT_IQTREE_ML_GCF_trees.sh`**: Target capture 2000 random BUSCO loci (CDS), align, filter and generate ML and concordance trees.
+*   **`13A_TargetCapture_BUSCO.sh`** & **`13B_MAFFT_IQTREE_ML_GCF_trees.sh`** & `**13C_Filtered_loci_check.sh`**: Target capture 2000 random BUSCO loci (CDS), align, filter and generate ML and concordance trees and check filtered genes.
 *   **`14A_Synteny_Alignment.sh` & `14B_Synteny_JCVI.sh`**: 1:2 ortholog filtering and monkey-patched 3-track JCVI karyotype visualization.
 
 ---
@@ -47,6 +47,7 @@ Following the upstream bash pipeline, data visualisation is handled locally usin
 *   **Parental Coverage:** Creates a Manhattan plot visualising the parental mapping coverage  across the 36 chromosomes.
 *   **Mitochondrial Topology:** Plots the RAxML topology for the mitochondrial markers
 *   **Pairwise Matrix:** Plots the pairwise SNP differences (absolute and 1-IBS) into a matrix.
+*   **Distribution map for the genus Laemanctus** Generate the distribution map for the genus Laemanctus based on iNaturalist and own observations.
 ---
 
 ## Data Availability
