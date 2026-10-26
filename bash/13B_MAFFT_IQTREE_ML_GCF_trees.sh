@@ -335,8 +335,10 @@ for fname in sorted(os.listdir(input_dir)):
 
     if u_het > 0.10 or s_het > 0.10:
         status = "2_Excluded_Paralog_or_Frameshift_(Het>10%)"
-    elif u_het < 0.005 or s_het < 0.005 or het_ratio > 3.0:
-        status = "3_Excluded_LOH_or_AllelicDropout_(Het<0.5%_or_Asymmetric)"
+    elif u_het < 0.001 or s_het < 0.001:
+        status = "3_Excluded_LOH_or_AllelicDropout_(Het<0.1%)"
+    elif het_ratio > 3.0:
+        status = "4_Excluded_Asymmetric_Divergence_(Ratio>3)"
     elif mat_sw > 0 or pat_sw > 0:
         status = "4_Excluded_Subgenome_PhaseSwitch_Chimera"
     else:
