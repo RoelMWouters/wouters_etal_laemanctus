@@ -59,8 +59,8 @@ PLINK_BIN="$SCRATCHDIR/plink"
 vcftools --gzvcf "$RAW_VCF" \
     --max-missing 1.0 \
     --minQ 30 \
-    --minDP 7 \
-    --maxDP 40 \
+    --minDP 10 \
+    --maxDP 60 \
     --recode --out "$SCRATCHDIR/${SPECIES_ID}_filtered"
 
 FILTERED_SNPS=$(grep "After filtering, kept" "$SCRATCHDIR/${SPECIES_ID}_filtered.log" | awk '{print $5}')
