@@ -240,11 +240,11 @@ with open(phy_out, "w") as f:
         f.write(f"{name:<30} {seq}\n")
 EOF
 
-# Run RAxML Rapid Bootstrapping (-N 100)
+# Run RAxML Rapid Bootstrapping (-N 1000)
 raxmlHPC-PTHREADS-SSE3 -T 8 \
     -f a \
     -x 12345 -p 12345 \
-    -N 100 \
+    -N 1000 \
     -m GTRGAMMA \
     -o Outgroup \
     -s RAxML_MT_Supermatrix.phy \
