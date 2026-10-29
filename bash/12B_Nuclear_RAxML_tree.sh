@@ -240,5 +240,5 @@ with open("RAxML_Supermatrix.phy", "w") as f:
 EOF
 python3 fasta_to_phylip.py
 
-raxmlHPC-PTHREADS-SSE3 -T 8 -f a -x 12345 -p 12345 -N 100 -m GTRGAMMA -o basvit -s RAxML_Supermatrix.phy -n F1_Hybrid_Topology
+raxmlHPC-PTHREADS-SSE3 -T 8 -f a -x 12345 -p 12345 -N 1000 -m GTRGAMMA -o basvit -s RAxML_Supermatrix.phy -n F1_Hybrid_Topology
 echo "=== PIPELINE COMPLETE ==="
