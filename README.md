@@ -1,5 +1,5 @@
 # wouters_etal_laemanctus
-Bioinformatic pipelines and scripts accompanying **Wouters et al. Field discovery and hybrid origin of the largest all-female clonal vertebrate, the casquehead lizard Laemanctus julioi**.
+Bioinformatic pipelines and scripts accompanying **Wouters et al. Origin of the largest obligately parthenogenetic vertebrate**.
 
 # Laemanctus Phylogenomic & Hybrid Assembly Pipeline
 
@@ -46,9 +46,10 @@ Following the upstream bash pipeline, data visualisation is handled locally usin
 *   **ML and eGCF plots:** Make plots for the uncollapsed Maximum Likelihood tree and collapsed effective Gene Concordance tree.
 *   **Parental Coverage:** Creates a Manhattan plot visualising the parental mapping coverage  across the 36 chromosomes.
 *   **Mitochondrial Topology:** Plots the RAxML topology for the mitochondrial markers
+*   **Nuclear Topology**:** Plots the RAxML topology for the nuclear markers
 *   **Pairwise Matrix:** Plots the pairwise SNP differences (absolute and 1-IBS) into a matrix.
 *   **Distribution map for the genus Laemanctus** Generate the distribution map for the genus Laemanctus based on iNaturalist and own observations.
 ---
 
 ## Data Availability
-All sequencing data for this project can be found under NCBI BioProject/SRA PRJNA1507630. 
+All sequencing data for this project can be found under NCBI BioProject/SRA PRJNA1507630 and the genome assembly can be found under NCBI BioProject/SRA PRJNA1514599. 
