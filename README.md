@@ -1,7 +1,7 @@
 # wouters_etal_laemanctus
 Bioinformatic pipelines and scripts accompanying **Wouters et al. Origin of the largest obligately parthenogenetic vertebrate**.
 
-# Laemanctus Phylogenomic & Hybrid Assembly Pipeline
+# Laemanctus julioi genome assembly and phylogenomics pipeline #
 
 **Author:** Roel Wouters | Faculty of Science, Charles University, Prague, Czech Republic 
 **Description:** A comprehensive bioinformatics pipeline for *de novo* genome assembly, Hi-C scaffolding, population genomics, and species tree inference in *Laemanctus* lizards.
