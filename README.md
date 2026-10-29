@@ -31,7 +31,7 @@ The pipeline is designed for execution on a PBS-scheduled High-Performance Compu
 *   **`11_Calc_BAF.sh`**: Extraction of allelic depths for B-Allele Frequency analysis.
 
 ### Phase 3: Phylogenomics & Synteny
-*   **`12A_Mitochondrial_RAxML_tree.sh`** & `**12B_Nuclear_RAxML_tree.sh`**: Pipeline for Mitochondrial and Nuclear gene extraction, alignments and computation of ML trees with RAxML.
+*   **`12A_Mitochondrial_RAxML_tree.sh`** & **`12B_Nuclear_RAxML_tree.sh`**: Pipeline for Mitochondrial and Nuclear gene extraction, alignments and computation of ML trees with RAxML.
 *   **`13A_TargetCapture_BUSCO.sh`** & **`13B_MAFFT_IQTREE_ML_GCF_trees.sh`** & `**13C_Filtered_loci_check.sh`**: Target capture 2000 random BUSCO loci (CDS), align, filter and generate ML and concordance trees and check filtered genes.
 *   **`14A_Synteny_Alignment.sh` & `14B_Synteny_JCVI.sh`**: 1:2 ortholog filtering and monkey-patched 3-track JCVI karyotype visualization.
 
