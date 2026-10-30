@@ -22,10 +22,10 @@ TOP_N_CHROMOSOMES <- 36
 # Filters
 CONTIGS_TO_REMOVE <- c("contig_x", "contig_y")
 
-# Optional: Truncate a specific contig to remove artifactual tails (e.g., LOH regions)
+# Optional: Truncate a specific contig to remove artifactual chimeras for example
 # Set TRUNCATE_CONTIG to NULL to disable
-TRUNCATE_CONTIG <- "ptg000005l" 
-TRUNCATE_CUTOFF <- 278731350 
+TRUNCATE_CONTIG <- "contig_name" 
+TRUNCATE_CUTOFF <- 278731350 #coordinates
 
 # Sample Mapping (Update column headers to match your TSV)
 SAMPLE_COLS <- c("PopA" = "S01_AD", "PopB" = "S04_AD", "PopC" = "S07_AD")
