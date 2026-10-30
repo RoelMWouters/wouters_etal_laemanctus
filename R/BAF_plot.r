@@ -14,8 +14,8 @@ INPUT_TSV <- "BAF_Data.tsv"
 INPUT_FAI <- "Genome.fasta.fai"
 
 # Depth and Plotting parameters
-MIN_DP <- 15   
-MAX_DP <- 30 
+MIN_DP <- 10   
+MAX_DP <- 60 
 TARGET_DENSITY_PER_MB <- 60 
 TOP_N_CHROMOSOMES <- 36
 
